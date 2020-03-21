@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Mehrsprachige Digital Humanities 
-language: de
+language: cn
 ---
 
 # Sprache Zählt

@@ -1,6 +1,6 @@
 ---
 layout: default
-language: eo
+language: en
 ---
 
 # Lingvoj gravas

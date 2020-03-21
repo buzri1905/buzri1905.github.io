@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 다중 언어의 디지털 인문학 
-language: ko
+language: kr
 ---
 
 # 언어는 중요하다

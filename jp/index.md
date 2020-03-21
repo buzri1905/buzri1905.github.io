@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 多语言数字人文科学
-language: zh
+language: jp
 ---
 
 # 语言很重要
