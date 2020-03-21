@@ -28,22 +28,17 @@
     </nav>
     <nav class="language-switcher">
       {% if page.name contains "index" %}
-        <a class="eo" href="{{ site.baseurl }}/">EO</a>
+        <a class="en" href="{{ site.baseurl }}/">EN</a>
         <a class="en" href="{{ site.baseurl | append: "/en" }}">EN</a>
-        <a class="de" href="{{ site.baseurl | append: "/de" }}">DE</a>
-        <a class="it" href="{{ site.baseurl | append: "/it" }}">IT</a>
-        <a class="zh" href="{{ site.baseurl | append: "/zh" }}">ZH</a>
-        <a class="ko" href="{{ site.baseurl | append: "/ko" }}">KO</a>
-        <a class="ca" href="{{ site.baseurl | append: "/ca" }}">CA</a>
+        <a class="kr" href="{{ site.baseurl | append: "/kr" }}">KR</a>
+        <a class="jp" href="{{ site.baseurl | append: "/jp" }}">JP</a>
+        <a class="cn" href="{{ site.baseurl | append: "/cn" }}">CN</a>
 
       {% else %}
-        <a class="eo" href="{{ site.baseurl | append: page.handle }}">EO</a>
-        <a class="en" href="{{ site.baseurl | append: "/en" | append: page.handle }}">EN</a>
-        <a class="de" href="{{ site.baseurl | append: "/de" | append: page.handle }}">DE</a>
-        <a class="it" href="{{ site.baseurl | append: "/it" | append: page.handle }}">IT</a>
-        <a class="zh" href="{{ site.baseurl | append: "/zh" | append: page.handle }}">ZH</a>
-        <a class="ko" href="{{ site.baseurl | append: "/ko" | append: page.handle }}">KO</a>
-        <a class="ca" href="{{ site.baseurl | append: "/ca" | append: page.handle }}">CA</a>
+        <a class="en" href="{{ site.baseurl | append: page.handle }}">EN</a>
+        <a class="kr" href="{{ site.baseurl | append: "/kr" | append: page.handle }}">KR</a>
+        <a class="jp" href="{{ site.baseurl | append: "/jp" | append: page.handle }}">JP</a>
+        <a class="cn" href="{{ site.baseurl | append: "/cn" | append: page.handle }}">CN</a>
       {% endif %}
     </nav>
 
