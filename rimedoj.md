@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Rimedoj
-language: eo
+language: en
 ---
 
 Rimedoj
