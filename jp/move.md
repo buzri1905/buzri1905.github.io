@@ -1,6 +1,6 @@
 ---
 layout: default
-title: 多语言数字人文科学
+title: 多语言数字人文科学jp
 language: jp
 ---
 
