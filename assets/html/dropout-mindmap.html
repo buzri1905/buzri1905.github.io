@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #f4f5fb; display: flex; flex-direction: column; align-items: center; font-family: sans-serif; }
+  p.hint { font-size: 0.78rem; color: #999; padding: 10px 0 4px; }
+  canvas { display: block; cursor: default; max-width: 100%; }
+</style>
+</head>
+<body>
+<p class="hint">노드를 클릭해보세요 👆</p>
+<canvas id="c" width="600" height="420"></canvas>
+<script>
+(function () {
+  var canvas = document.getElementById('c');
+  var ctx    = canvas.getContext('2d');
+  var W = 600, H = 420;
+  var cx = W / 2, cy = H / 2 + 10;
+
+  var NODES = [
+    { label: ['나'],                    color: '#2c3e50', r: 32, isCenter: true,  sub: '' },
+    { label: ['고등학교'],              color: '#6c8ebf', r: 24, sub: '틀에 맞지 않는다는 걸\n일찍 알았다.' },
+    { label: ['강원대'],                color: '#82b366', r: 24, sub: '스스로 선택한 공부가\n뭔지 처음 알게 된 곳.' },
+    { label: ['서강대'],                color: '#d79b00', r: 24, sub: '어떤 환경에서 살고 싶은지\n감이 생겼다.' },
+    { label: ['서울대', '대학원'],      color: '#c0785a', r: 24, sub: '학문의 깊이와 함께\n질식하는 느낌도 배웠다.' },
+    { label: ['런던 정경대', '대학원'], color: '#9673a6', r: 24, sub: '세상이 얼마나 넓은지\n내가 얼마나 작은지.' },
+    { label: ['고려대', '대학원'],      color: '#e07070', r: 24, sub: '진짜 하고 싶은 게\n뭔지 물었다.' },
+    { label: ['지금 🚀'],              color: '#2dbe60', r: 30, sub: '1인 게임 개발\n+ 스마트팜', isFinal: true }
+  ];
+
+  var outers  = NODES.slice(1);
+  var outerR  = 155;
+  outers.forEach(function (n, i) {
+    var a = -Math.PI / 2 + (i / outers.length) * Math.PI * 2;
+    n.x = cx + outerR * Math.cos(a);
+    n.y = cy + outerR * Math.sin(a);
+  });
+  NODES[0].x = cx;
+  NODES[0].y = cy;
+
+  var selected = null;
+  var hovered  = null;
+
+  function rrect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#f4f5fb';
+    ctx.fillRect(0, 0, W, H);
+
+    // web ring
+    ctx.save();
+    ctx.setLineDash([4, 6]);
+    ctx.strokeStyle = 'rgba(0,0,0,0.09)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    outers.forEach(function (n, i) {
+      var nxt = outers[(i + 1) % outers.length];
+      ctx.moveTo(n.x, n.y);
+      ctx.lineTo(nxt.x, nxt.y);
+    });
+    ctx.stroke();
+    ctx.restore();
+
+    // spokes
+    outers.forEach(function (n) {
+      var isSel = (selected === n);
+      var isHov = (hovered  === n);
+      ctx.save();
+      if (!isSel) ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = isSel ? n.color : isHov ? n.color + 'aa' : '#bbb';
+      ctx.lineWidth   = isSel ? 2.5 : 1.5;
+      ctx.beginPath();
+      ctx.moveTo(NODES[0].x, NODES[0].y);
+      ctx.lineTo(n.x, n.y);
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    outers.forEach(drawNode);
+    drawNode(NODES[0]);
+
+    if (selected && !selected.isCenter && selected.sub) drawTooltip(selected);
+  }
+
+  function drawNode(n) {
+    var isSel = (selected === n);
+    var isHov = (hovered  === n);
+    var r = n.r + (isSel ? 5 : isHov ? 2 : 0);
+    ctx.save();
+
+    if (isSel) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r + 12, 0, Math.PI * 2);
+      ctx.fillStyle = n.color + '30';
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = (isSel || n.isCenter) ? n.color : '#ffffff';
+    ctx.shadowColor   = 'rgba(0,0,0,0.18)';
+    ctx.shadowBlur    = isSel ? 14 : 6;
+    ctx.shadowOffsetY = 2;
+    ctx.fill();
+
+    ctx.shadowColor   = 'transparent';
+    ctx.shadowBlur    = 0;
+    ctx.shadowOffsetY = 0;
+
+    if (!n.isCenter) {
+      ctx.strokeStyle = n.color;
+      ctx.lineWidth   = 2.2;
+      ctx.stroke();
+    }
+
+    ctx.fillStyle    = (isSel || n.isCenter) ? '#fff' : n.color;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    var fs = n.isCenter ? 14 : 10;
+    ctx.font = 'bold ' + fs + 'px sans-serif';
+    n.label.forEach(function (line, i) {
+      var lh = fs + 3;
+      var oy = (i - (n.label.length - 1) / 2) * lh;
+      ctx.fillText(line, n.x, n.y + oy);
+    });
+
+    ctx.restore();
+  }
+
+  function drawTooltip(n) {
+    var lines = n.sub.split('\n');
+    var padY  = 10, lh = 18, boxW = 180;
+    var boxH  = lines.length * lh + padY * 2;
+    var bx    = n.x - boxW / 2;
+    var by    = n.y + n.r + 16;
+    if (by + boxH > H - 8) by = n.y - n.r - boxH - 14;
+    if (bx < 6)            bx = 6;
+    if (bx + boxW > W - 6) bx = W - boxW - 6;
+
+    ctx.save();
+    ctx.shadowColor   = 'rgba(0,0,0,0.13)';
+    ctx.shadowBlur    = 12;
+    ctx.shadowOffsetY = 3;
+    rrect(bx, by, boxW, boxH, 9);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+
+    ctx.shadowColor   = 'transparent';
+    ctx.shadowBlur    = 0;
+    ctx.shadowOffsetY = 0;
+
+    rrect(bx, by, boxW, boxH, 9);
+    ctx.strokeStyle = n.color;
+    ctx.lineWidth   = 1.8;
+    ctx.stroke();
+
+    ctx.fillStyle = n.color;
+    ctx.fillRect(bx + 2, by, boxW - 4, 5);
+
+    ctx.fillStyle    = '#444';
+    ctx.font         = '11px sans-serif';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    lines.forEach(function (line, i) {
+      ctx.fillText(line, bx + boxW / 2, by + padY + 5 + i * lh + lh / 2);
+    });
+    ctx.restore();
+  }
+
+  function hitTest(mx, my) {
+    for (var i = NODES.length - 1; i >= 0; i--) {
+      var n = NODES[i];
+      var dx = mx - n.x, dy = my - n.y;
+      if (dx * dx + dy * dy <= (n.r + 8) * (n.r + 8)) return n;
+    }
+    return null;
+  }
+
+  function pos(e) {
+    var rect = canvas.getBoundingClientRect();
+    var sx = W / rect.width, sy = H / rect.height;
+    var s  = e.touches ? e.touches[0] : e;
+    return { x: (s.clientX - rect.left) * sx, y: (s.clientY - rect.top) * sy };
+  }
+
+  canvas.addEventListener('click', function (e) {
+    var hit = hitTest(pos(e).x, pos(e).y);
+    selected = (hit && selected === hit) ? null : hit;
+    draw();
+  });
+  canvas.addEventListener('mousemove', function (e) {
+    hovered = hitTest(pos(e).x, pos(e).y);
+    canvas.style.cursor = hovered ? 'pointer' : 'default';
+    draw();
+  });
+  canvas.addEventListener('mouseleave', function () {
+    hovered = null; draw();
+  });
+  canvas.addEventListener('touchend', function (e) {
+    e.preventDefault();
+    var t = e.changedTouches[0];
+    var hit = hitTest(pos(t).x, pos(t).y);
+    selected = (hit && selected === hit) ? null : hit;
+    draw();
+  });
+
+  draw();
+})();
+</script>
+</body>
+</html>
