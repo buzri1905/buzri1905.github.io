@@ -14,146 +14,253 @@ description: "고등학교부터 런던 정경대까지 여섯 번 자퇴했다.
 
 그렇다고 그냥 흘러다닌 건 아니다. 각자의 자리에서 배운 것들이 있고, 만난 사람들이 있고, 남은 것들이 있다. 자퇴가 낭비였다는 생각은 한 번도 해본 적 없다.
 
-<div id="dropout-journey-viz" style="margin:2rem 0;"></div>
+<div id="mindmap-wrap" style="margin:2rem 0;text-align:center;">
+  <p style="font-size:0.8rem;color:#999;margin-bottom:6px;">노드를 클릭해보세요 👆</p>
+  <canvas id="mindmap-canvas" style="width:100%;max-width:620px;border-radius:14px;display:block;margin:0 auto;"></canvas>
+</div>
 
 <script>
 (function () {
-  var STEPS = [
-    { id:1, label:"고등학교",         icon:"🏫", color:"#6c8ebf", note:"첫 번째 자퇴. 틀에 맞지 않는다는 걸 일찍 알았다." },
-    { id:2, label:"강원대",           icon:"🎓", color:"#82b366", note:"스스로 선택한 공부가 뭔지 처음 알게 된 곳." },
-    { id:3, label:"서강대",           icon:"🎓", color:"#d79b00", note:"내가 어떤 환경에서 살고 싶은지 감이 생겼다." },
-    { id:4, label:"서울대 대학원",    icon:"🏛️", color:"#a0522d", note:"학문의 깊이와 함께 질식하는 느낌도 배웠다." },
-    { id:5, label:"런던 정경대 대학원", icon:"🌍", color:"#9673a6", note:"세상이 얼마나 넓은지 — 그리고 내가 얼마나 작은지." },
-    { id:6, label:"고려대 대학원",    icon:"🎓", color:"#e07070", note:"마지막으로 스스로에게 물었다. \"진짜 하고 싶은 게 뭐야?\"" },
-    { id:7, label:"지금",             icon:"🚀", color:"#2dbe60", note:"1인 게임 개발 + 스마트팜. 두렵지만, 시작한다.", isFinal:true }
-  ];
+  function init() {
+    var wrap = document.getElementById('mindmap-wrap');
+    var canvas = document.getElementById('mindmap-canvas');
+    if (!canvas) return;
 
-  function build() {
-    var container = document.getElementById("dropout-journey-viz");
-    if (!container) return;
-    container.innerHTML = "";
-    container.style.cssText = "font-family:sans-serif;padding:1.5rem 1rem;background:#f9f9fb;border-radius:12px;";
+    var W = Math.min(wrap.offsetWidth || 600, 620);
+    var H = Math.round(W * 0.72);
+    canvas.width = W;
+    canvas.height = H;
 
-    var hint = document.createElement("p");
-    hint.style.cssText = "text-align:center;color:#999;font-size:0.82rem;margin:0 0 1rem;";
-    hint.textContent = "각 단계를 클릭해보세요 👆";
-    container.appendChild(hint);
+    var ctx = canvas.getContext('2d');
+    var cx = W / 2, cy = H / 2;
 
-    STEPS.forEach(function(step, idx) {
-      var row = document.createElement("div");
-      row.style.cssText = "display:flex;align-items:stretch;";
+    var NODES = [
+      { id:0, lines:['나'], color:'#2c3e50', textColor:'#fff', r:30, isCenter:true, sub:'' },
+      { id:1, lines:['고등학교'],         color:'#6c8ebf', r:26, sub:'틀에 맞지 않는다는 걸\n일찍 알았다.' },
+      { id:2, lines:['강원대'],           color:'#82b366', r:26, sub:'스스로 선택한 공부가\n뭔지 처음 알게 된 곳.' },
+      { id:3, lines:['서강대'],           color:'#d79b00', r:26, sub:'어떤 환경에서 살고 싶은지\n감이 생겼다.' },
+      { id:4, lines:['서울대','대학원'],   color:'#a0522d', r:26, sub:'학문의 깊이와 함께\n질식하는 느낌도 배웠다.' },
+      { id:5, lines:['런던 정경대','대학원'], color:'#9673a6', r:26, sub:'세상이 얼마나 넓은지\n내가 얼마나 작은지.' },
+      { id:6, lines:['고려대','대학원'],   color:'#e07070', r:26, sub:'진짜 하고 싶은 게\n뭔지 물었다.' },
+      { id:7, lines:['지금 🚀'],          color:'#2dbe60', r:30, sub:'1인 게임 개발\n+ 스마트팜', isFinal:true },
+    ];
 
-      /* ── spine ── */
-      var spine = document.createElement("div");
-      spine.style.cssText = "display:flex;flex-direction:column;align-items:center;width:36px;flex-shrink:0;";
+    // Position outer nodes
+    var outerR = Math.min(W, H) * 0.34;
+    var outers = NODES.slice(1);
+    outers.forEach(function (n, i) {
+      var angle = -Math.PI / 2 + (i / outers.length) * Math.PI * 2;
+      n.x = cx + outerR * Math.cos(angle);
+      n.y = cy + outerR * Math.sin(angle);
+      n.angle = angle;
+    });
+    NODES[0].x = cx;
+    NODES[0].y = cy;
 
-      var topLine = document.createElement("div");
-      topLine.style.cssText = "flex:1;width:2px;background:" + (idx === 0 ? "transparent" : "#ddd") + ";min-height:10px;";
+    var selected = null;
+    var hovered = null;
 
-      var dot = document.createElement("div");
-      dot.style.cssText = [
-        "width:" + (step.isFinal ? "20px" : "14px"),
-        "height:" + (step.isFinal ? "20px" : "14px"),
-        "border-radius:50%",
-        "background:" + step.color,
-        "border:3px solid white",
-        "box-shadow:0 0 0 2px " + step.color,
-        "flex-shrink:0",
-        "cursor:pointer",
-        "transition:transform .2s",
-        "z-index:1"
-      ].join(";") + ";";
+    /* ── helpers ── */
+    function rrect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
 
-      var botLine = document.createElement("div");
-      botLine.style.cssText = "flex:1;width:2px;background:" + (idx === STEPS.length - 1 ? "transparent" : "#ddd") + ";min-height:10px;";
+    /* ── draw ── */
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
 
-      spine.appendChild(topLine);
-      spine.appendChild(dot);
-      spine.appendChild(botLine);
+      // bg
+      var bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.65);
+      bg.addColorStop(0, '#f5f6ff');
+      bg.addColorStop(1, '#ecedf5');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
 
-      /* ── card ── */
-      var card = document.createElement("div");
-      card.style.cssText = [
-        "flex:1",
-        "margin:5px 0 5px 12px",
-        "padding:10px 14px",
-        "border-radius:8px",
-        "background:white",
-        "border:1.5px solid " + (step.isFinal ? step.color : "#eee"),
-        "cursor:pointer",
-        "transition:box-shadow .2s, border-color .2s",
-        step.isFinal ? "box-shadow:0 2px 10px " + step.color + "44" : ""
-      ].join(";") + ";";
+      // web ring (connecting adjacent outer nodes)
+      ctx.beginPath();
+      outers.forEach(function (n, i) {
+        var nxt = outers[(i + 1) % outers.length];
+        ctx.moveTo(n.x, n.y);
+        ctx.lineTo(nxt.x, nxt.y);
+      });
+      ctx.strokeStyle = 'rgba(0,0,0,0.07)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
 
-      var header = document.createElement("div");
-      header.style.cssText = "display:flex;align-items:center;gap:8px;";
+      // spokes
+      outers.forEach(function (n) {
+        var isSel = selected && selected.id === n.id;
+        var isHov = hovered && hovered.id === n.id;
+        ctx.beginPath();
+        ctx.moveTo(NODES[0].x, NODES[0].y);
+        ctx.lineTo(n.x, n.y);
+        ctx.strokeStyle = isSel ? n.color : isHov ? n.color + '88' : 'rgba(0,0,0,0.13)';
+        ctx.lineWidth = isSel ? 2.5 : isHov ? 1.8 : 1.5;
+        ctx.setLineDash(isSel ? [] : [5, 5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      });
 
-      var iconEl = document.createElement("span");
-      iconEl.style.cssText = "font-size:1.1rem;";
-      iconEl.textContent = step.icon;
+      // nodes (outer first, center on top)
+      outers.forEach(function (n) { drawNode(n); });
+      drawNode(NODES[0]);
 
-      var labelEl = document.createElement("span");
-      labelEl.style.cssText = "font-weight:700;color:" + (step.isFinal ? step.color : "#333") + ";font-size:0.93rem;";
-      labelEl.textContent = step.label;
+      // tooltip
+      if (selected && !selected.isCenter && selected.sub) drawTooltip(selected);
+    }
 
-      var badge = document.createElement("span");
-      badge.style.cssText = [
-        "margin-left:auto",
-        "font-size:0.68rem",
-        "background:" + step.color + "22",
-        "color:" + step.color,
-        "padding:2px 8px",
-        "border-radius:20px",
-        "font-weight:700"
-      ].join(";") + ";";
-      badge.textContent = step.isFinal ? "▶ 시작" : "자퇴";
+    function drawNode(n) {
+      var isSel = selected && selected.id === n.id;
+      var isHov = hovered && hovered.id === n.id;
+      var r = n.r + (isSel ? 5 : isHov ? 2 : 0);
 
-      header.appendChild(iconEl);
-      header.appendChild(labelEl);
-      header.appendChild(badge);
-
-      var noteEl = document.createElement("div");
-      noteEl.style.cssText = "font-size:0.82rem;color:#666;line-height:1.5;margin-top:0;max-height:0;overflow:hidden;transition:max-height .35s ease,opacity .35s,margin-top .35s;opacity:0;";
-      noteEl.textContent = step.note;
-
-      card.appendChild(header);
-      card.appendChild(noteEl);
-
-      var open = !!step.isFinal;
-      if (open) {
-        noteEl.style.maxHeight = "80px";
-        noteEl.style.opacity = "1";
-        noteEl.style.marginTop = "7px";
+      // glow
+      if (isSel) {
+        var g = ctx.createRadialGradient(n.x, n.y, r * 0.5, n.x, n.y, r + 14);
+        g.addColorStop(0, n.color + '55');
+        g.addColorStop(1, n.color + '00');
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r + 14, 0, Math.PI * 2);
+        ctx.fillStyle = g;
+        ctx.fill();
       }
 
-      function toggle() {
-        open = !open;
-        noteEl.style.maxHeight   = open ? "80px" : "0";
-        noteEl.style.opacity     = open ? "1"    : "0";
-        noteEl.style.marginTop   = open ? "7px"  : "0";
-        card.style.borderColor   = open ? step.color : (step.isFinal ? step.color : "#eee");
-        card.style.boxShadow     = open ? "0 2px 12px " + step.color + "44" : (step.isFinal ? "0 2px 10px " + step.color + "44" : "");
-        dot.style.transform      = open ? "scale(1.35)" : "scale(1)";
+      // circle
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = (isSel || n.isCenter) ? n.color : '#fff';
+      ctx.shadowColor = isSel ? n.color : 'rgba(0,0,0,0.12)';
+      ctx.shadowBlur = isSel ? 12 : 6;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      if (!n.isCenter) {
+        ctx.strokeStyle = n.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
       }
 
-      card.addEventListener("click", toggle);
-      dot.addEventListener("click", toggle);
+      // label
+      var lines = n.lines;
+      ctx.fillStyle = (isSel || n.isCenter) ? '#fff' : n.color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var fontSize = n.isCenter ? 13 : 10;
+      ctx.font = 'bold ' + fontSize + 'px sans-serif';
+      lines.forEach(function (line, i) {
+        var lineH = fontSize + 3;
+        var offsetY = (i - (lines.length - 1) / 2) * lineH;
+        ctx.fillText(line, n.x, n.y + offsetY);
+      });
 
-      row.appendChild(spine);
-      row.appendChild(card);
-      container.appendChild(row);
+      // final star badge
+      if (n.isFinal) {
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillStyle = '#fff';
+      }
+    }
+
+    function drawTooltip(n) {
+      var lines = n.sub.split('\n');
+      var PX = 14, PY = 10, LH = 17;
+      var tw = 170;
+      var th = lines.length * LH + PY * 2;
+
+      // prefer below node, else above
+      var tx = n.x - tw / 2;
+      var ty = n.y + n.r + 12;
+      if (ty + th > H - 8) ty = n.y - n.r - th - 12;
+      if (tx < 6) tx = 6;
+      if (tx + tw > W - 6) tx = W - tw - 6;
+
+      // shadow box
+      ctx.shadowColor = 'rgba(0,0,0,0.15)';
+      ctx.shadowBlur = 12;
+      rrect(tx, ty, tw, th, 8);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // border
+      rrect(tx, ty, tw, th, 8);
+      ctx.strokeStyle = n.color;
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      // top accent bar
+      rrect(tx, ty, tw, 5, 4);
+      ctx.fillStyle = n.color;
+      ctx.fill();
+
+      // text
+      ctx.fillStyle = '#444';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      lines.forEach(function (line, i) {
+        ctx.fillText(line, tx + tw / 2, ty + PY + 5 + i * LH + LH / 2);
+      });
+    }
+
+    /* ── hit test ── */
+    function hitNode(mx, my) {
+      for (var i = NODES.length - 1; i >= 0; i--) {
+        var n = NODES[i];
+        if (n.x === undefined) continue;
+        var hit = n.r + 8;
+        if ((mx - n.x) * (mx - n.x) + (my - n.y) * (my - n.y) <= hit * hit) return n;
+      }
+      return null;
+    }
+
+    function getPos(e) {
+      var rect = canvas.getBoundingClientRect();
+      var sx = canvas.width / rect.width;
+      var sy = canvas.height / rect.height;
+      var src = e.touches ? e.touches[0] : e;
+      return { x: (src.clientX - rect.left) * sx, y: (src.clientY - rect.top) * sy };
+    }
+
+    canvas.addEventListener('click', function (e) {
+      var p = getPos(e);
+      var hit = hitNode(p.x, p.y);
+      selected = (hit && selected && hit.id === selected.id) ? null : hit;
+      draw();
     });
 
-    var footer = document.createElement("div");
-    footer.style.cssText = "text-align:center;margin-top:1rem;font-size:0.8rem;color:#aaa;";
-    footer.innerHTML = "총 <strong style='color:#e07070'>6번</strong>의 자퇴 → <strong style='color:#2dbe60'>새로운 시작</strong>";
-    container.appendChild(footer);
+    canvas.addEventListener('mousemove', function (e) {
+      var p = getPos(e);
+      var hit = hitNode(p.x, p.y);
+      hovered = hit;
+      canvas.style.cursor = hit ? 'pointer' : 'default';
+      draw();
+    });
+
+    canvas.addEventListener('mouseleave', function () {
+      hovered = null;
+      draw();
+    });
+
+    draw();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", build);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-    build();
+    // small delay so layout is settled
+    setTimeout(init, 50);
   }
 })();
 </script>
