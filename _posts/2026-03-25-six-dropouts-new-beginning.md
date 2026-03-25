@@ -4,6 +4,7 @@ date: 2026-03-25 13:00:00 +0900
 categories: [일상, 에세이]
 tags: [자퇴, 도전, 게임개발, 스마트팜, 인생]
 description: "고등학교부터 런던 정경대까지 여섯 번 자퇴했다. 그리고 이제 1인 게임 개발과 스마트팜을 시작한다."
+render_with_liquid: false
 ---
 
 고등학교, 강원대, 서강대, 서울대 대학원, 런던 정경대 대학원, 고려대 대학원.
@@ -25,7 +26,7 @@ description: "고등학교부터 런던 정경대까지 여섯 번 자퇴했다.
   <canvas id="mindmap-canvas" width="600" height="440"></canvas>
 </div>
 
-{% raw %}<script>
+<script>
 (function () {
   var canvas = document.getElementById('mindmap-canvas');
   if (!canvas) return;
@@ -272,7 +273,7 @@ description: "고등학교부터 런던 정경대까지 여섯 번 자퇴했다.
 
   draw();
 })();
-</script>{% endraw %}
+</script>
 
 ---
 
