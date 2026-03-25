@@ -25,7 +25,7 @@ description: "고등학교부터 런던 정경대까지 여섯 번 자퇴했다.
   <canvas id="mindmap-canvas" width="600" height="440"></canvas>
 </div>
 
-<script>
+{% raw %}<script>
 (function () {
   var canvas = document.getElementById('mindmap-canvas');
   if (!canvas) return;
@@ -272,7 +272,7 @@ description: "고등학교부터 런던 정경대까지 여섯 번 자퇴했다.
 
   draw();
 })();
-</script>
+</script>{% endraw %}
 
 ---
 
