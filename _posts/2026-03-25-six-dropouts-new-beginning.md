@@ -14,6 +14,10 @@ description: "고등학교부터 런던 정경대까지 여섯 번 자퇴했다.
 
 그렇다고 그냥 흘러다닌 건 아니다. 각자의 자리에서 배운 것들이 있고, 만난 사람들이 있고, 남은 것들이 있다. 자퇴가 낭비였다는 생각은 한 번도 해본 적 없다.
 
+<!-- 타임라인 시각화 -->
+<div id="dropout-journey-viz" style="margin:2rem 0;"></div>
+<script src="/assets/js/dropout-journey.js"></script>
+
 ---
 
 이번엔 두 가지를 시작하려 한다.
